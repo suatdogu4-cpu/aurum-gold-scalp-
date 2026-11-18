@@ -1,4 +1,4 @@
-"""ATLAS OSINT PRO v0.4.2 — passive, source-linked investigation gateway.
+"""ATLAS OSINT PRO v0.4.4 — passive, source-linked investigation gateway.
 Developer: Suat DOĞU. Public data only. No intrusive scanning.
 Run: uvicorn main:app --host 0.0.0.0 --port 10000
 """
@@ -8,6 +8,7 @@ import asyncio
 import hashlib
 import ipaddress
 import json
+import math
 import logging
 import os
 import re
@@ -22,11 +23,13 @@ from fastapi import FastAPI, Header, HTTPException, Request, WebSocket, WebSocke
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-VERSION = "0.4.2"
+VERSION = "0.4.4"
 ROOT = Path(__file__).resolve().parent
 APP_TOKEN = os.environ.get("OSINT_APP_TOKEN", "").strip()
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
 OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
+# Optional: an authentic contact email for Crossref Polite pool (never invent one).
+CROSSREF_CONTACT_EMAIL = os.environ.get("CROSSREF_CONTACT_EMAIL", "").strip()
 # Wikimedia asks for an identifiable application and contact URL. A 403 is not
 # automatically recoverable; never proxy-hop around deliberate blocks.
 WIKIMEDIA_USER_AGENT = "AtlasOSINTPro/0.4.1 (https://github.com/suatdogu4-cpu/atlas-osint-pro; passive public-data research)"
@@ -44,6 +47,38 @@ RATE_LIMIT = 18  # per IP / minute, in addition to APP_TOKEN
 CACHE_TTL = 240
 MAX_CACHE_ENTRIES = 128
 REQUEST_TIMEOUT = httpx.Timeout(14.0, connect=5.0)
+
+# Crossref compliance: do not evade rate limits or retry a 429 immediately.
+# In-memory, per-process controls; a Render restart clears them.
+_crossref_lock = asyncio.Lock()
+_crossref_cooldown_until = 0.0
+_crossref_backoff = 60.0
+_crossref_last_request = 0.0
+_crossref_cache: dict[str, tuple[float, list[dict]]] = {}
+CROSSREF_CACHE_TTL = 900  # successful/empty author-name lookups, 15 minutes
+CROSSREF_MAX_CACHE = 64
+
+class CrossrefCooldownError(ValueError):
+    """A temporary provider rate limit; NEVER treat as a negative name match."""
+
+
+def crossref_retry_after_seconds(raw: str | None, fallback: int = 90) -> int:
+    """Parse seconds or HTTP-date Retry-After header with a bounded cooldown."""
+    if raw:
+        raw = raw.strip()
+        if raw.isdecimal():
+            return min(3600, max(30, int(raw)))
+        try:
+            from email.utils import parsedate_to_datetime
+            target = parsedate_to_datetime(raw)
+            if target.tzinfo is None:
+                target = target.replace(tzinfo=timezone.utc)
+            sec = math.ceil((target - datetime.now(timezone.utc)).total_seconds())
+            return min(3600, max(30, sec))
+        except (TypeError, ValueError, OverflowError):
+            pass
+    return min(3600, max(60, fallback))
+
 
 KINDS = {
     "domain": "Alan adı / DNS / RDAP / CT",
@@ -307,10 +342,53 @@ async def lookup_public_crossref(client, fullname):
 
     Crossref is NOT a registry of people. No result is not evidence of absence.
     """
-    data = await get_json(client, "https://api.crossref.org/works", {
-        "query.author": fullname, "rows": 12,
-        "select": "DOI,title,author,published,container-title"
-    })
+    global _crossref_cooldown_until, _crossref_backoff, _crossref_last_request
+    cache_key = _norm_public_name(fullname)
+    hit = _crossref_cache.get(cache_key)
+    if hit and hit[0] > time.monotonic():
+        # Preserve original evidence timestamp and label an answer as cached.
+        return [{**row, "fields": {**row.get("fields", {}), "cached_response": True}}
+                for row in hit[1]]
+
+    async with _crossref_lock:
+        # Check again after waiting: another request may have populated the cache.
+        hit = _crossref_cache.get(cache_key)
+        if hit and hit[0] > time.monotonic():
+            return [{**row, "fields": {**row.get("fields", {}), "cached_response": True}}
+                    for row in hit[1]]
+        delay = _crossref_cooldown_until - time.monotonic()
+        if delay > 0:
+            raise CrossrefCooldownError(
+                f"Crossref geçici istek sınırında (HTTP 429); yeniden denemek için "
+                f"yaklaşık {math.ceil(delay)} saniye bekleyin. Yeni istek gönderilmedi."
+            )
+        # List/search endpoints are more tightly rate-limited than single-record endpoints.
+        interval = time.monotonic() - _crossref_last_request
+        if interval < 2.0:
+            await asyncio.sleep(2.0 - interval)
+        params = {"query.author": fullname, "rows": 12,
+                  "select": "DOI,title,author,published,container-title"}
+        user_agent = "AtlasOSINTPro/0.4.4 (https://github.com/suatdogu4-cpu/atlas-osint-pro)"
+        if CROSSREF_CONTACT_EMAIL and re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", CROSSREF_CONTACT_EMAIL):
+            params["mailto"] = CROSSREF_CONTACT_EMAIL
+            user_agent = user_agent[:-1] + "; mailto:" + CROSSREF_CONTACT_EMAIL + ")"
+        try:
+            _crossref_last_request = time.monotonic()
+            data = await get_json(client, "https://api.crossref.org/works", params,
+                                  headers={"User-Agent": user_agent, "Accept": "application/json"})
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                pause = crossref_retry_after_seconds(exc.response.headers.get("Retry-After"),
+                                                       int(_crossref_backoff))
+                _crossref_cooldown_until = time.monotonic() + pause
+                _crossref_backoff = min(1800.0, max(120.0, _crossref_backoff * 2))
+                raise CrossrefCooldownError(
+                    f"Crossref HTTP 429: istek sınırı. Yaklaşık {pause} saniye bekleyin; "
+                    "mevcut sorgu başka kaynakların sonuçlarını engellemez."
+                ) from exc
+            raise
+        _crossref_backoff = 60.0
+        _crossref_cooldown_until = 0.0
     target = _norm_public_name(fullname)
     results = []
     for work in data.get("message", {}).get("items", [])[:12]:
@@ -331,6 +409,10 @@ async def lookup_public_crossref(client, fullname):
                              "query_is_name_only": True, "source_scope": "publication_metadata"}))
         if len(results) >= 5:
             break
+    # Cache the scoped Crossref response (including a successful empty result).
+    if len(_crossref_cache) >= CROSSREF_MAX_CACHE:
+        _crossref_cache.clear()
+    _crossref_cache[cache_key] = (time.monotonic() + CROSSREF_CACHE_TTL, results)
     return results
 
 
@@ -642,7 +724,7 @@ async def home():
 async def health():
     return {"status": "ok", "version": VERSION, "protected": bool(APP_TOKEN),
             "ready": bool(APP_TOKEN), "sources": len(KINDS), "time_utc": now(),
-            "features": ["evidence_sha256", "relationship_graph", "timeline", "source_comparison", "case_export", "public_name_candidates", "explicit_social_profile", "domain_footprint", "local_photo_metadata", "username_candidates", "organization_candidates", "local_header_analysis"]}
+            "features": ["evidence_sha256", "relationship_graph", "timeline", "source_comparison", "case_export", "public_name_candidates", "explicit_social_profile", "domain_footprint", "local_photo_metadata", "username_candidates", "organization_candidates", "local_header_analysis", "crossref_rate_limit_backoff"]}
 
 
 @app.get("/api/sources")
@@ -651,6 +733,50 @@ async def sources(x_osint_key: str | None = Header(default=None)):
     return {"sources": [{"id": k, "name": v, "type": "REST (on-demand)"} for k, v in KINDS.items()],
             "live": ["mempool.space WebSocket (browser direct)"], "source_health": _source_health}
 
+
+
+@app.post("/api/investigate-detailed")
+async def investigate_detailed(payload: SearchRequest, request: Request,
+                               x_osint_key: str | None = Header(default=None)):
+    """Uncached one-shot query with per-source outcomes, useful when no records match.
+
+    Empty results indicate no matching records from the checked source, not absence
+    of a person from the internet. No identity matching or private data enrichment.
+    """
+    require_token(x_osint_key)
+    check_rate_limit(request.client.host if request and request.client else "unknown")
+    try:
+        query = validate(payload.kind, payload.query)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    async with make_client() as client:
+        async def checked(label: str, coro):
+            start = time.monotonic()
+            rows = await source_job(label, coro)
+            good = sum(row.get("status") != "error" for row in rows)
+            failed = [row for row in rows if row.get("status") == "error"]
+            state = "partial" if good and failed else "error" if failed else "ok" if good else "empty"
+            return rows, {
+                "source": label,
+                "status": state,
+                "records": good,
+                "errors": len(failed),
+                "detail": failed[0].get("description", "") if failed else "",
+                "duration_ms": round((time.monotonic() - start) * 1000),
+                "checked_at": now(),
+            }
+        providers = get_tasks(client, payload.kind, query)
+        checks = await asyncio.gather(*(checked(label, coro) for label, coro in providers))
+    records = [attach_evidence_metadata(record, payload.kind, query)
+               for batch, _ in checks for record in batch]
+    summary = [status for _, status in checks]
+    return {"kind": payload.kind, "query": query,
+            "results": records, "source_checks": summary,
+            "checked_sources": len(summary), "record_count": sum(x.get("status") != "error" for x in records),
+            "error_count": sum(x.get("status") == "error" for x in records),
+            "cached": False, "checked_at": now(),
+            "scope_note": "Yalnız belirtilen kamuya açık veri kaynakları sorgulandı. Eşleşmemesi, internette bilgi bulunmadığı anlamına gelmez."}
 
 @app.post("/api/investigate")
 async def investigate_rest(payload: SearchRequest, x_osint_key: str | None = Header(default=None), request: Request = None):

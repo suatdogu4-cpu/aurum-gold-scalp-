@@ -1,4 +1,4 @@
-"""ATLAS OSINT PRO v0.4.1 — passive, source-linked investigation gateway.
+"""ATLAS OSINT PRO v0.4.2 — passive, source-linked investigation gateway.
 Developer: Suat DOĞU. Public data only. No intrusive scanning.
 Run: uvicorn main:app --host 0.0.0.0 --port 10000
 """
@@ -22,7 +22,7 @@ from fastapi import FastAPI, Header, HTTPException, Request, WebSocket, WebSocke
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 ROOT = Path(__file__).resolve().parent
 APP_TOKEN = os.environ.get("OSINT_APP_TOKEN", "").strip()
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()

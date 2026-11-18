@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111d"><title>ATLAS OSINT PRO v0.4.1</title>
+<meta name="theme-color" content="#07111d"><title>ATLAS OSINT PRO v0.4.2</title>
 <style>
 :root{color-scheme:dark;--bg:#060e18;--panel:#0d1b2c;--panel2:#102238;--line:#223952;--txt:#eaf3ff;--muted:#96aeca;--cyan:#3bd8f5;--green:#4ddb9c;--amber:#ffd075;--red:#ff7f8c;--blue:#8ca8ff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#12365a 0%,transparent 30%),var(--bg);color:var(--txt);font:14px/1.45 system-ui,Arial,sans-serif}a{color:var(--cyan);overflow-wrap:anywhere}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
@@ -26,7 +26,7 @@ nav{display:flex;overflow-x:auto;gap:7px;padding:19px 0 14px;scrollbar-width:non
 .photo-grid{display:grid;grid-template-columns:minmax(140px,1fr) minmax(0,1.2fr);gap:12px;margin-top:16px}.photo-grid img{max-width:100%;max-height:330px;object-fit:contain;border-radius:12px;border:1px solid var(--line);background:#06101c}.photo-grid .entry{margin:5px 0}.profile-photo{width:64px;height:64px;border-radius:12px;object-fit:cover;border:1px solid var(--line);float:right;margin:0 0 8px 8px}@media(max-width:600px){.photo-grid{grid-template-columns:1fr}}
 </style></head>
 <body><div class="shell">
-<header class="top"><div><div class="logo">ATLAS <b>OSINT</b> PRO</div><div class="sub">Açık kaynak araştırma merkezi · v0.4.1 · Geliştirici: Suat DOĞU</div></div><div id="status" class="status">● Kontrol ediliyor</div></header>
+<header class="top"><div><div class="logo">ATLAS <b>OSINT</b> PRO</div><div class="sub">Açık kaynak araştırma merkezi · v0.4.2 · Geliştirici: Suat DOĞU</div></div><div id="status" class="status">● Kontrol ediliyor</div></header>
 <nav aria-label="Ana sekmeler"><button class="active" data-tab="overview">◈ Kokpit</button><button data-tab="research">⌕ Araştırma</button><button data-tab="people">♙ Kişi / İz</button><button data-tab="photo">▧ Fotoğraf</button><button data-tab="live">◉ Canlı akış</button><button data-tab="sources">▦ Kaynaklar</button><button data-tab="graph">◎ İlişki</button><button data-tab="timeline">◷ Zaman</button><button data-tab="intel">▥ Analiz</button><button data-tab="evidence">◆ Kanıt</button><button data-tab="case">▤ Vaka / Rapor</button></nav>
 <section id="overview" class="page">
 <div class="panel"><div class="eyebrow">Araştırma altyapısı</div><h1 class="section" style="margin-top:6px">Tek merkez, çok kaynaklı OSINT</h1><div class="small">Alan adı, DNS, IP, GitHub, Bluesky, haber, CVE, Bitcoin, Wayback ve akademik yayınların kamuya açık kayıtlarını sorgula. Bulguların yanında gerçek kaynak bağlantısı ve kontrol zamanı bulunur.</div></div>
@@ -36,7 +36,7 @@ nav{display:flex;overflow-x:auto;gap:7px;padding:19px 0 14px;scrollbar-width:non
 <section id="research" class="page hidden"><div class="panel"><h2 class="section">Yeni OSINT sorgusu</h2><div class="fields"><div class="f"><label for="kind">Araştırma türü</label><select id="kind"><option value="domain">Alan adı · DNS / RDAP / CT</option><option value="ip">Genel IP / RDAP</option><option value="github_user">GitHub kullanıcı</option><option value="github_repos">GitHub depo arama</option><option value="bluesky">Bluesky açık gönderiler</option><option value="news">Haber · GDELT</option><option value="cve">CVE · NVD + EPSS + KEV</option><option value="bitcoin">Bitcoin adresi</option><option value="wayback">Web arşivi · Wayback</option><option value="openalex">Bilimsel yayın · OpenAlex</option><option value="kev">CISA KEV · CVE / üretici</option><option value="username_public">Kullanıcı adı · iki platform adayı</option><option value="company_public">Kurum / şirket · açık kayıt adayları</option><option value="person_public">Ad-soyad · kamusal aday kayıtları</option><option value="social_profile">Açık profil · github: / bluesky:</option><option value="web_trace">Dijital iz · alan adı</option></select></div><div class="f"><label for="query">Hedef / anahtar kelime</label><input id="query" placeholder="example.com" maxlength="160" autocomplete="off"></div><button class="btn" id="go">Araştır</button></div><div id="query-help" class="small" style="margin:9px 0;color:#a8dbe7"></div><div id="manual-person-search" class="row" style="margin:8px 0 14px"></div><div class="row" style="margin-top:12px"><span id="query-state" class="small">Hazır · Sonuçlar WebSocket üzerinden iletilir.</span><button class="btn secondary" id="json-export" type="button">JSON dışa aktar</button><button class="btn danger" id="clear" type="button">Temizle</button></div></div><div class="panel"><h2 class="section">Kaynaklı bulgular <span id="result-count" class="small">(0)</span></h2><div id="results" class="small">Sorgu başlatıldığında sonuçlar burada görüntülenir.</div></div></section>
 <section id="people" class="page hidden">
 <div class="panel"><div class="eyebrow">Kişi / kamusal kayıt adayları</div><h2 class="section">Ad Soyad Araştırması</h2>
-<p class="small">Yalnız Wikidata ve OpenAlex içindeki açık kamusal kayıt adaylarını getirir. Aynı ad-soyadı taşıyan kişiler birleştirilmez. Bu sonuçlar kişinin kimliğini doğrulamaz.</p>
+<p class="small">Wikidata, OpenAlex ve Crossref içindeki açık kamusal kayıt adaylarını getirir. Aynı ad-soyadı taşıyan kişiler birleştirilmez. Bu sonuçlar kişinin kimliğini doğrulamaz.</p>
 <div class="f"><label for="person-name">Ad ve soyad (2–5 kelime)</label><input id="person-name" maxlength="80" placeholder="Örn. örnek ad soyad" autocomplete="off"></div>
 <div class="row" style="margin-top:12px"><button class="btn" id="person-search" type="button">Kamusal adayları araştır</button></div></div>
 <div class="panel"><h2 class="section">Belirtilen Sosyal Medya Hesabı</h2><p class="small">GitHub veya Bluesky'de doğrudan girilen açık profili sorgular. Kullanıcı adı benzerliğinden diğer hesapları eşleştirmez.</p>
@@ -116,7 +116,7 @@ function runSearch(){if(st.ws&&st.ws.readyState<=1)return;let kind=$('kind').val
 const end=()=>{$('go').disabled=false;st.ws=null;};ws.onopen=()=>{ws.send(JSON.stringify({kind,query,token:st.token}));setState('Bağlandı · Kaynaklar sorgulanıyor...')};ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(m.type==='started')setState('Sorgu başladı · '+kind);if(m.type==='result'){addResult(m.item);found++;setState('Bulgular geliyor · '+found+' kayıt')}if(m.type==='done'){finalized=true;setState('Tamamlandı · '+m.count+' gerçek bulgu'+(m.errors?' · '+m.errors+' kaynak hatası':'')+(m.cached?' · önbellek':''));end();refreshHealth()}if(m.type==='error'){finalized=true;setState('Hata: '+m.message);end()}};ws.onerror=()=>{if(!finalized)setState('WebSocket bağlantı hatası. Sunucu ve anahtarı kontrol edin.')};ws.onclose=()=>{if(!finalized)setState('Bağlantı kapandı. Alınan kayıtlar korunuyor.');end()};}
 $('go').addEventListener('click',runSearch);$('query').addEventListener('keydown',e=>{if(e.key==='Enter')runSearch()});document.querySelectorAll('[data-quick]').forEach(b=>b.addEventListener('click',()=>{$('kind').value=b.dataset.quick;$('query').value=b.dataset.q;runSearch()}));
 function clearResults(){st.results=[];st.history=[];st.queries=0;st.errors=0;$('results').replaceChildren();$('results').textContent='Sonuçlar temizlendi.';$('results').dataset.empty='yes';metrics();activity();setState('Hazır');}$('clear').addEventListener('click',clearResults);
-function reportData(){return {app:'ATLAS OSINT PRO',version:'0.4.1',exported_at:new Date().toISOString(),case_name:$('case-name').value.trim(),notes:$('case-notes').value,query_history:st.history,results:st.results,disclaimer:'Bulgular yalnızca kaynakta görünen açık kayıtlardır; otomatik kimlik eşleştirmesi yapılmaz.'}}
+function reportData(){return {app:'ATLAS OSINT PRO',version:'0.4.2',exported_at:new Date().toISOString(),case_name:$('case-name').value.trim(),notes:$('case-notes').value,query_history:st.history,results:st.results,disclaimer:'Bulgular yalnızca kaynakta görünen açık kayıtlardır; otomatik kimlik eşleştirmesi yapılmaz.'}}
 function download(name,content,mime){const a=document.createElement('a'),blob=new Blob([content],{type:mime});a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},60000)}
 $('json-export').addEventListener('click',()=>download('ATLAS_OSINT_BULGULAR.json',JSON.stringify(reportData(),null,2),'application/json'));
 $('case-export').addEventListener('click',()=>download('ATLAS_OSINT_VAKA.json',JSON.stringify(reportData(),null,2),'application/json'));
@@ -236,7 +236,7 @@ resultCard=function(x){const card=atlasBaseCard(x);if(validRecord(x)){const acti
 const atlasBaseClear=clearResults;
 clearResults=function(){atlasBaseClear();atlas.chosen.clear();atlas.notes={};atlas.focus='';queueAtlas()};
 const atlasBaseReport=reportData;
-reportData=function(){const base=atlasBaseReport();return {...base,version:'0.4.1',case_evidence:st.results.filter(x=>atlas.chosen.has(markId(x))).map(x=>({...x,review_note:atlas.notes[markId(x)]||''})),relationship_graph:buildGraph(st.results),timeline:eventsFrom(st.results),audit_note:'SHA-256 değerleri kaynak kayıt içeriğinin bütünlük kimliğidir; imza veya doğruluk garantisi değildir. Otomatik kimlik eşleştirmesi yoktur.'}}
+reportData=function(){const base=atlasBaseReport();return {...base,version:'0.4.2',case_evidence:st.results.filter(x=>atlas.chosen.has(markId(x))).map(x=>({...x,review_note:atlas.notes[markId(x)]||''})),relationship_graph:buildGraph(st.results),timeline:eventsFrom(st.results),audit_note:'SHA-256 değerleri kaynak kayıt içeriğinin bütünlük kimliğidir; imza veya doğruluk garantisi değildir. Otomatik kimlik eşleştirmesi yoktur.'}}
 $('graph-focus').addEventListener('change',()=>{atlas.focus=$('graph-focus').value;queueAtlas()});$('timeline-filter').addEventListener('change',drawTimeline);
 $('graph-reset').addEventListener('click',()=>{const el=$('atlas-graph');el.setAttribute('viewBox','0 0 720 440')});
 let zoomFactor=1;
@@ -425,7 +425,7 @@ $('visual-note-copy').addEventListener('click',async()=>{
 });
 $('visual-note-clear').addEventListener('click',()=>{$('visual-notes').value='';$('visual-note-copy').textContent='Notları kopyala'});
 
-// v0.4.1 — distinguish search types and offer explicit, manual public searches.
+// v0.4.2 — distinguish search types and offer explicit, manual public searches.
 const atlasQueryHints={
  domain:['example.com','Bu tür yalnız alan adı içindir (örn. example.com).'],
  web_trace:['example.com','Dijital iz bu seçenek altında yalnız web alan adını analiz eder. Kişi için Ad-soyad seç.'],
@@ -467,5 +467,93 @@ function atlasCheckInput(){
 // Capture handlers run before earlier listeners and avoid needless invalid requests.
 $('go').addEventListener('click',e=>{if(!atlasCheckInput()){e.stopImmediatePropagation();e.preventDefault()}},true);
 $('query').addEventListener('keydown',e=>{if(e.key==='Enter'&&!atlasCheckInput()){e.stopImmediatePropagation();e.preventDefault()}},true);
+
+
+/* ATLAS v0.4.2 — Person/Trace inline results: keep the user in Kişi / İz. */
+const quickResultConfig={
+ person_public:{button:'person-search',title:'Ad-soyad · Kamusal kayıt adayları',note:'Sonuçlar aynı adı taşıyan başka kişilerle ilgili olabilir. Kimlik doğrulaması yapılmaz.'},
+ social_profile:{button:'social-search',title:'Açık sosyal profil',note:'Profilin varlığı, farklı platformlardaki aynı adlı hesapların aynı kişiye ait olduğunu kanıtlamaz.'},
+ web_trace:{button:'trace-search',title:'Alan adı · Dijital iz sonuçları',note:'DNS, RDAP ve sertifika kayıtları teknik bağlantılardır; kişi kimliği kanıtı değildir.'},
+ username_public:{button:'handle-audit-run',title:'Kullanıcı adı · Açık kayıt adayları',note:'Aynı kullanıcı adı ayrı platformlarda farklı kişilere ait olabilir.'},
+ company_public:{button:'company-run',title:'Kurum · Açık kayıt adayları',note:'Bu aday kayıtlar resmî ticaret sicili veya ortaklık kanıtı değildir.'}
+};
+const quickResultState={session:null};
+function quickResultPanel(kind){
+ const config=quickResultConfig[kind];
+ if(!config)return null;
+ let panel=document.getElementById('quick-results-'+kind);
+ if(panel)return panel;
+ const anchor=$(config.button)?.closest('.panel');
+ if(!anchor)return null;
+ panel=node('section','panel');panel.id='quick-results-'+kind;
+ const heading=node('h2','section',config.title);
+ const status=node('p','small','Sorgu bekleniyor.');status.id='quick-state-'+kind;status.setAttribute('aria-live','polite');
+ const counts=node('div','small','0 bulgu · 0 kaynak hatası');counts.id='quick-count-'+kind;
+ const results=node('div','list');results.id='quick-list-'+kind;
+ const note=node('div','hint',config.note);
+ panel.append(heading,status,counts,results,note);
+ if(kind==='person_public'){
+  const manual=node('div','row');manual.id='quick-manual-person';manual.style.marginTop='12px';panel.append(manual);
+ }
+ anchor.after(panel);
+ return panel;
+}
+function quickRender(){
+ const session=quickResultState.session;
+ if(!session)return;
+ const list=$('quick-list-'+session.kind),counter=$('quick-count-'+session.kind);
+ if(!list||!counter)return;
+ const selected=st.results.slice(session.startIndex).filter(x=>
+   x.query_kind===session.kind && String(x.query||'').trim().toLocaleLowerCase('tr-TR')===session.query.toLocaleLowerCase('tr-TR'));
+ const successes=selected.filter(x=>x.status!=='error').length;
+ const errors=selected.length-successes;
+ counter.textContent=successes+' bulgu · '+errors+' kaynak hatası (bu sorgu)';
+ list.replaceChildren();
+ if(!selected.length){list.append(node('p','small','Henüz sonuç gelmedi. Kaynaklar boş dönebilir veya erişimi reddedebilir.'));return;}
+ selected.forEach(x=>list.append(resultCard(x)));
+}
+const savedQuickOSINT=quickOSINT;
+quickOSINT=function(kind,query){
+ const q=String(query||'').trim();
+ if(!quickResultConfig[kind]){savedQuickOSINT(kind,q);return;}
+ if(st.ws&&st.ws.readyState<=1){
+  quickResultPanel(kind);
+  $('quick-state-'+kind).textContent='Önce devam eden araştırmanın bitmesini bekleyin.';
+  tab('people');return;
+ }
+ const panel=quickResultPanel(kind);
+ if(!panel)return savedQuickOSINT(kind,q);
+ const status=$('quick-state-'+kind);
+ if(!q){status.textContent='Lütfen araştırılacak değeri girin.';tab('people');return;}
+ quickResultState.session={kind,query:q,startIndex:st.results.length};
+ $('quick-list-'+kind).replaceChildren();
+ $('quick-count-'+kind).textContent='0 bulgu · 0 kaynak hatası (bu sorgu)';
+ status.textContent='Kaynaklara bağlanılıyor...';
+ if(kind==='person_public'){
+  const manual=$('quick-manual-person');manual.replaceChildren(node('span','small','Manuel doğrulama bağlantıları:'));
+  const urls=[['Wikidata','https://www.wikidata.org/w/index.php?search='+encodeURIComponent(q)],
+   ['Google','https://www.google.com/search?q='+encodeURIComponent('"'+q+'"')],
+   ['Bing','https://www.bing.com/search?q='+encodeURIComponent('"'+q+'"')]];
+  for(const [label,url] of urls){const a=node('a','',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';manual.append(a)}
+ }
+ // Re-use the existing, token-protected WebSocket with HTTPS fallback and evidence processing.
+ try{
+  $('kind').value=kind; $('query').value=q;
+  $('kind').dispatchEvent(new Event('change',{bubbles:true}));
+  $('query').dispatchEvent(new Event('input',{bubbles:true}));
+  savedQuickOSINT(kind,q);
+ }catch(err){status.textContent='İstek başlatılamadı: '+String(err.message||err);}
+ // The old handler selects Araştırma synchronously; restore Kişi / İz in the same event turn.
+ tab('people');
+ quickRender();
+};
+new MutationObserver(()=>quickRender()).observe($('results'),{childList:true});
+new MutationObserver(()=>{
+ const session=quickResultState.session;
+ if(!session)return;
+ if($('kind').value!==session.kind||$('query').value.trim()!==session.query)return;
+ const state=$('quick-state-'+session.kind);
+ if(state)state.textContent=$('query-state').textContent||'İstek durumu bilinmiyor.';
+}).observe($('query-state'),{childList:true,characterData:true,subtree:true});
 
 </script></body></html>
